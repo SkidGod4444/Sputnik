@@ -3,8 +3,7 @@ from discord.ext import commands
 from core import Context
 import aiohttp
 
-class NotVoter(commands.CheckFailure):
-  pass
+
 
 def DotEnv(query: str):
   return os.getenv(query)
@@ -14,11 +13,47 @@ def getConfig(guildID):
         data = json.load(config)
     if str(guildID) not in data["guilds"]:
         defaultConfig = {
+            "backupkey": "none",
             "antiSpam": False,
             "antiLink": False,
-            "whitelisted": [], 
-            "punishment": "ban",
-            "prefix": "$"
+            "whitelisted": [],
+            "banwl": [],
+            "unbanwl": [],
+            "kickwl": [],   
+            "prunewl": [],
+            "spamwl": [],
+            "pingswl": [],
+            "webwl": [],
+            "channelcwl": [],
+            "channelrwl": [],
+            "rolecwl": [],
+            "rolerwl": [],
+            "linkwl": [],
+            "integrationwl": [],
+            "emowl": [],
+            "stickerwl": [],
+            "guildwl": [],
+            "botwl": [],
+            "abanpunish": "none",
+            "aunbanpunish": "none",
+            "akickpunish": "none",
+            "aspampunish": "none",
+            "awebpunish": "none",
+            "arolepunish": "none",
+            "achannelpunish": "none",
+            "apingpunish": "none",
+            "alinkpunish": "none",
+            "aintigpunish": "none",
+            "aemopunish": "none",
+            "aprunepunish": "none",
+            "aguildpunish": "none",
+            "astickpunish": "none",
+            "abotpunish": "none",
+            "beastmode":"none",
+            "prefix": ".",
+            "mod": [],
+            "admin": [],
+            "owner": []
         }
         updateConfig(guildID, defaultConfig)
         return defaultConfig
@@ -32,6 +67,23 @@ def updateConfig(guildID, data):
     newdata = json.dumps(config, indent=4, ensure_ascii=False)
     with open("config.json", "w") as config:
         config.write(newdata)
+
+def give_unb(user_id: int) -> None:
+    with open("2ndbotowners.json", "r") as file:
+        file_data = json.load(file)
+        if str(user_id) in file_data["ids"]:
+            return
+
+        file_data["ids"].append(str(user_id))
+    with open("2ndbotowners.json", "w") as file:
+        json.dump(file_data, file, indent=4)
+
+def take_unb(user_id: int) -> None:
+    with open("2ndbotowners.json", "r") as file:
+        file_data = json.load(file)
+        file_data["ids"].remove(str(user_id))
+    with open("2ndbotowners.json", "w") as file:
+        json.dump(file_data, file, indent=4)
 
 
 def add_user_to_blacklist(user_id: int) -> None:
@@ -52,6 +104,23 @@ def remove_user_from_blacklist(user_id: int) -> None:
     with open("blacklist.json", "w") as file:
         json.dump(file_data, file, indent=4)
 
+def add_mod(user_id: int) -> None:
+    with open("config.json", "r") as file:
+        file_data = json.load(file)
+        if str(user_id) in file_data["ids"]:
+            return
+
+        file_data["ids"].append(str(user_id))
+    with open("config.json", "w") as file:
+        json.dump(file_data, file, indent=4)
+
+
+def remove_mod(user_id: int) -> None:
+    with open("config.json", "r") as file:
+        file_data = json.load(file)
+        file_data["ids"].remove(str(user_id))
+    with open("config.json", "w") as file:
+        json.dump(file_data, file, indent=4)
 
 def update_vanity(guild, code):
     with open('vanity.json', 'r') as vanity:
@@ -72,29 +141,38 @@ def blacklist_check():
 
     return commands.check(predicate)
 
+def mod_check():
+    def predicate(ctx):
+        with open("config.json") as f:
+            data = json.load(f)
+            if str(ctx.author.id) in data["ids"]:
+                return True
+            
+
 
 def restart_program():
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
-def getlogger(guildid):
-  with open("logs.json", "r") as ok:
-    data = json.load(ok)
+def getLogger(guildid):
+  with open("logger.json", "r") as op:
+    data = json.load(op)
   if str(guildid) not in data:
     default = {
       "channel": ""
     }
-    makelogger(guildid, default)
+    createLogger(guildid, default)
     return default
   return data[str(guildid)]
 
-def makelogger(guildid, data):
-  with open("logs.json", "r") as f:
+def createLogger(guildid, data):
+  with open("logger.json", "r") as f:
     logs = json.load(f)
   logs[str(guildid)] = data
   new = json.dumps(logs, indent=4, ensure_ascii=False)
-  with open("logs.json", "w") as idk:
+  with open("logger.json", "w") as idk:
     idk.write(new)
+
 
 def getbadges(userid):
   with open("badges.json", "r") as f:
@@ -113,31 +191,233 @@ def makebadges(userid, data):
   with open("badges.json", "w") as w:
     w.write(new)
 
-async def check_voter(mem):
-  async with aiohttp.ClientSession(headers={"Authorization": DotEnv("top-gg")}) as session:
-    async with session.get(f"https://top.gg/api/bots/852919423018598430/check?userId={str(mem)}") as response:
-      vote = await response.json()
-      if vote["voted"] == 1 or mem in [743431588599038003, 905396101274828821]:
-        response.close()
-        return "okay"
-      else:
-        response.close()
-        return "not okay"
 
-def is_voter():
-  async def predicate(ctx: Context):
-    async with aiohttp.ClientSession(headers={"Authorization": DotEnv("top-gg")}) as session:
-      async with session.get(f"https://top.gg/api/bots/{str(ctx.bot.user.id)}/check?userId={str(ctx.author.id)}") as response:
-        vote = await response.json()
-        if vote["voted"] == 1 or ctx.author.id in ctx.bot.owner_ids:
-          response.close()
-          return True
-        else:
-          response.close()
-          raise NotVoter()
+#antiban#
 
-  return commands.check(predicate)
 
+def getantiban(guildid):
+    with open("antiban.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiban(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiban(guildid, data):
+    with open("antiban.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiban.json", "w") as config:
+        config.write(newdata)
+#antikick#
+def getantikick(guildid):
+    with open("antikick.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantikick(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantikick(guildid, data):
+    with open("antikick.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antikick.json", "w") as config:
+        config.write(newdata)
+#antiguild#
+def getantiguild(guildid):
+    with open("antiguild.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiguild(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiguild(guildid, data):
+    with open("antiguild.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiguild.json", "w") as config:
+        config.write(newdata)
+
+#antiemo#
+def getantiemo(guildid):
+    with open("antiemo.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiemo(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiemo(guildid, data):
+    with open("antiemo.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiemo.json", "w") as config:
+        config.write(newdata)
+#antisticker#
+def getantisticker(guildid):
+    with open("antisticker.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantisticker(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantisticker(guildid, data):
+    with open("antisticker.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antisticker.json", "w") as config:
+        config.write(newdata)
+#antirole#
+def getantirole(guildid):
+    with open("antirole.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantirole(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantirole(guildid, data):
+    with open("antirole.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antirole.json", "w") as config:
+        config.write(newdata)
+#antichannel#
+def getantich(guildid):
+    with open("antich.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantich(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantich(guildid, data):
+    with open("antich.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antich.json", "w") as config:
+        config.write(newdata)
+#antibot#
+def getantibot(guildid):
+    with open("antibot.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantibot(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantibot(guildid, data):
+    with open("antibot.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antibot.json", "w") as config:
+        config.write(newdata)
+#antiintigration#
+def getantiintig(guildid):
+    with open("antiintig.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiintig(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiintig(guildid, data):
+    with open("antiintig.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiintig.json", "w") as config:
+        config.write(newdata)
+#antiping#
+def getantiping(guildid):
+    with open("antiping.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiping(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiping(guildid, data):
+    with open("antiping.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiping.json", "w") as config:
+        config.write(newdata)
+#antiprune#
+def getantiprune(guildid):
+    with open("antiprune.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiprune(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiprune(guildid, data):
+    with open("antiprune.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiprune.json", "w") as config:
+        config.write(newdata)
+#antispam#
+def getantispam(guildid):
+    with open("antispam.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantispam(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantispam(guildid, data):
+    with open("antispam.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antispam.json", "w") as config:
+        config.write(newdata)
+#antiwebhook#
+def getantiwebh(guildid):
+    with open("antiwebh.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updateantiwebh(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updateantiwebh(guildid, data):
+    with open("antiwebh.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("antiwebh.json", "w") as config:
+        config.write(newdata)
+
+#antianti#
 def getanti(guildid):
     with open("anti.json", "r") as config:
         data = json.load(config)
@@ -154,3 +434,52 @@ def updateanti(guildid, data):
     newdata = json.dumps(config, indent=4, ensure_ascii=False)
     with open("anti.json", "w") as config:
         config.write(newdata)
+
+def add_channel_to_ignore(user_id: int) -> None:
+    with open("ignore.json", "r") as file:
+        file_data = json.load(file)
+        if str(user_id) in file_data["ids"]:
+            return
+
+        file_data["ids"].append(str(user_id))
+    with open("ignore.json", "w") as file:
+        json.dump(file_data, file, indent=4)
+
+
+def remove_channel_from_ignore(user_id: int) -> None:
+    with open("ignore.json", "r") as file:
+        file_data = json.load(file)
+        file_data["ids"].remove(str(user_id))
+    with open("ignore.json", "w") as file:
+        json.dump(file_data, file, indent=4)
+
+
+def ignore_check():
+
+    def predicate(ctx):
+        with open("ignore.json") as f:
+            data = json.load(f)
+            if str(ctx.channel.id) in data["ids"]:
+                return False
+            return True
+
+    return commands.check(predicate)
+
+
+def getbeastmode(guildid):
+    with open("beastmode.json", "r") as config:
+        data = json.load(config)
+    if str(guildid) not in data["guilds"]:
+        default = "off"
+        updatebeastmode(guildid, default)
+        return default
+    return data["guilds"][str(guildid)]
+
+def updatebeastmode(guildid, data):
+    with open("beastmode.json", "r") as config:
+        config = json.load(config)
+    config["guilds"][str(guildid)] = data
+    newdata = json.dumps(config, indent=4, ensure_ascii=False)
+    with open("beastmode.json", "w") as config:
+        config.write(newdata)
+

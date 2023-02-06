@@ -1,4 +1,5 @@
 import os
+os.system("pip install httpx")
 import discord
 from discord.ext import commands
 import requests
@@ -8,7 +9,7 @@ from itertools import cycle
 import threading
 import datetime
 import logging
-from core import Cog, Darkz
+from core import Cog,Sputnik
 import time
 import asyncio
 import aiohttp
@@ -28,33 +29,34 @@ proxs = cycle(proxies)
 proxies={"http": 'http://' + next(proxs)}
 
 class antiguild(Cog):
-    def __init__(self, client: Darkz):
+    def __init__(self, client: Sputnik):
         self.client = client      
-        self.headers = {"Authorization": f"Bot ODUyOTE5NDIzMDE4NTk4NDMw.GoxHP1.xHwxbepouv5-7IJbvyL5Espvi6j_JOMvwMm1mY"}
-        print("Cog Loaded: Antiguild")
+        self.headers = {"Authorization": f"Bot MTAzNDQ1MzkzOTkzMzkzNzczNA.GASulU.95KgzwiRyc2_uKXGdbNSpiMwqq2B7wZjx8CvX0"}
+       # print("Cog Loaded: Antiguild")
     @commands.Cog.listener()
     async def on_guild_update(self, before, after) -> None:
         try:
             data = getConfig(before.id)
-            anti = getanti(before.id)
-            punishment = data["punishment"]
+            anti = getantiguild(before.id)
+            punish = data["aguildpunish"]
             wled = data["whitelisted"]
+            wl = data["guildwl"]
             reason = "Updating Guild | Not Whitelisted"
             guild = after
             async for entry in after.audit_logs(
                 limit=1):
               user = entry.user.id
             api = random.randint(8,9)
-            if entry.user.id == 852919423018598430:
+            if entry.user.id == 967791712942583818:
               return
             elif entry.user == after.owner:
               return
-            elif str(entry.user.id) in wled or anti == "off":
+            elif str(entry.user.id) in wled or wl or anti == "off":
               return
             else:
              if entry.action == discord.AuditLogAction.guild_update:
               async with aiohttp.ClientSession(headers=self.headers) as session:
-               if punishment == "ban":
+               if punish == "ban":
                   async with session.put(f"https://discord.com/api/v{api}/guilds/%s/bans/%s" % (guild.id, user), json={"reason": reason}) as r:
                       if before.icon and not before.icon == after.icon:
                         banneidn = requests.get(before.icon.url)
@@ -67,7 +69,7 @@ class antiguild(Cog):
                       if before.icon == after.icon:
                         await after.edit(name=f"{before.name}", description=f"{before.description}", verification_level=before.verification_level, rules_channel=before.rules_channel, afk_channel=before.afk_channel, afk_timeout=before.afk_timeout, default_notifications=before.default_notifications, explicit_content_filter=before.explicit_content_filter, system_channel=before.system_channel, system_channel_flags=before.system_channel_flags, public_updates_channel=before.public_updates_channel, reason=reason, premium_progress_bar_enabled=before.premium_progress_bar_enabled)
                       logging.info("Successfully banned %s" % (user))
-               elif punishment == "kick":
+               elif punish == "kick":
                          async with session.delete(f"https://discord.com/api/v{api}/guilds/%s/members/%s" % (guild.id, user), json={"reason": reason}) as r2:
                                if before.icon and not before.icon == after.icon:
                                 bannei = requests.get(before.icon.url)
@@ -80,7 +82,7 @@ class antiguild(Cog):
                          if before.icon and before.icon == after.icon:
                            await after.edit(name=f"{before.name}", description=f"{before.description}", verification_level=before.verification_level, rules_channel=before.rules_channel, afk_channel=before.afk_channel, afk_timeout=before.afk_timeout, default_notifications=before.default_notifications, explicit_content_filter=before.explicit_content_filter, system_channel=before.system_channel, system_channel_flags=before.system_channel_flags, public_updates_channel=before.public_updates_channel, reason=reason, premium_progress_bar_enabled=before.premium_progress_bar_enabled)
                            logging.info("Successfully kicked %s" % (user))
-               elif punishment == "none":
+               elif punish == "none":
                            mem = guild.get_member(entry.user.id)
                            await mem.edit(roles=[role for role in mem.roles if not role.permissions.administrator], reason=reason)
                            if before.icon and not before.icon == after.icon:

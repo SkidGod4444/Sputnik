@@ -1,15 +1,23 @@
 from __future__ import annotations
-#____________ Commands ___________
+from core import Sputnik
+
+#######<<------CoMMaNDs------>>########
+
 from .commands.help import Help
-from .commands.Moderation import Moderation
-from .commands.extras import Extra
-from .commands.Anti_cmds import Antinuke
-from .commands.Owner import Owner
-from .commands.Antiraid_cmds import Antiraid
-from .commands.Logging import Logging
-from .commands.Games import Games
-#____________ Events _____________
+from .commands.general import General
+from .commands.moderation import Moderation
+from .commands.A1_Sputnik_v3 import Security
+from .commands.setup import Setup
+from .commands.autosetup import Autosetup
+from .commands.automoderation import Automoderation
+from .commands.logging import Logging
+from .commands.extra import Extra
+from .commands.owner import Owner
+from .commands.ignore import Ignore
+from .commands.universal_ban import UniversalBan
+#<<------EVENTS-------->>########
 from .events.antiban import antiban
+from .events.antimem import antimem
 from .events.antichannel import antichannel
 from .events.antiguild import antiguild
 from .events.antirole import antirole
@@ -24,26 +32,32 @@ from .events.antispam import AntiSpam
 from .events.autoblacklist import AutoBlacklist
 from .events.antiemojid import antiemojid
 from .events.antiemojiu import antiemojiu
+
+from .events.join import Join
 from .events.Errors import Errors
 from .events.on_guild import Guild
-#
-#
-from core import Darkz
+from .events.ready import ready
+from .events.antiupdate import antiupdate
+#######<<-------------------->>########
 
-async def setup(bot: Darkz):
+async def setup(bot:Sputnik):
   await bot.add_cog(Help(bot))
-  print('Help Command Loaded')
+  await bot.add_cog(Setup(bot))
+  await bot.add_cog(General(bot))
   await bot.add_cog(Moderation(bot))
-  print("Moderation Cog Loaded")
+  await bot.add_cog(Security(bot))
+  await bot.add_cog(Automoderation(bot))
+  await bot.add_cog(Logging(bot))
   await bot.add_cog(Extra(bot))
-  print("Extras Cog Loaded")
-  await bot.add_cog(Antinuke(bot))
-  print("Antinuke commands Cog Loaded")
   await bot.add_cog(Owner(bot))
-  print("Owner commands Cog Loaded")
-  await bot.add_cog(Antiraid(bot))
-  print("Antiraid commands Cog Loaded")
+  await bot.add_cog(UniversalBan(bot))
+  await bot.add_cog(Ignore(bot))
+  await bot.add_cog(Autosetup(bot))
+
+#######<<-------------------->>########
+  
   await bot.add_cog(antiban(bot))
+  await bot.add_cog(antimem(bot))
   await bot.add_cog(antichannel(bot))
   await bot.add_cog(antiguild(bot))
   await bot.add_cog(antirole(bot))
@@ -53,15 +67,12 @@ async def setup(bot: Darkz):
   await bot.add_cog(antiwebhook(bot))
   await bot.add_cog(antipinginv(bot))
   await bot.add_cog(antiemostick(bot))
+  await bot.add_cog(antiupdate(bot))
   await bot.add_cog(antintegration(bot))  
   await bot.add_cog(AntiSpam(bot))
   await bot.add_cog(AutoBlacklist(bot))
   await bot.add_cog(antiemojid(bot))
   await bot.add_cog(antiemojiu(bot))
   await bot.add_cog(Guild(bot))
-  print("Cog loaded: Guild")
   await bot.add_cog(Errors(bot))
-  await bot.add_cog(Logging(bot))
-  print("Logging Cog loaded")
-  await bot.add_cog(Games(bot))
-  print("Cog Loaded: Games")
+  await bot.add_cog(Join(bot))

@@ -9,7 +9,7 @@ import threading
 import datetime
 import logging
 import time
-from core import Darkz, Cog
+from core import Sputnik, Cog
 import asyncio
 import aiohttp
 import tasksio
@@ -28,16 +28,17 @@ proxs = cycle(proxies)
 proxies={"http": 'http://' + next(proxs)}
 
 class antiprune(Cog):
-    def __init__(self, client: Darkz):
+    def __init__(self, client:Sputnik):
         self.client = client      
-        self.headers = {"Authorization": f"Bot ODUyOTE5NDIzMDE4NTk4NDMw.GoxHP1.xHwxbepouv5-7IJbvyL5Espvi6j_JOMvwMm1mY"}
-        print("Cog Loaded: Antiprune")
+        self.headers = {"Authorization": f"Bot MTAzNDQ1MzkzOTkzMzkzNzczNA.GASulU.95KgzwiRyc2_uKXGdbNSpiMwqq2B7wZjx8CvX0"}
+        #print("Cog Loaded: Antiprune")
     @commands.Cog.listener()
     async def on_member_remove(self, member) -> None:
         try:
             data = getConfig(member.guild.id)
-            anti = getanti(member.guild.id)
-            punishment = data["punishment"]
+            anti = getantiprune(member.guild.id)
+            punish = data["aprunepunish"]
+            wl = data["prunewl"]
             wled = data["whitelisted"]
             guild = member.guild
             reason = "Pruned Guild | Not Whitelisted"
@@ -47,18 +48,18 @@ class antiprune(Cog):
               
               user = entry.user.id
               api = random.randint(8,9)
-              if str(entry.user.id) in wled or anti == "off":
+              if str(entry.user.id) in wled or wl or anti == "off":
                 if entry.action == discord.AuditLogAction.member_prune:
                   async with aiohttp.ClientSession(headers=self.headers) as session:
-                    if punishment == "ban":
+                    if punish == "ban":
                       async with session.put(f"https://discord.com/api/v{api}/guilds/%s/bans/%s" % (guild.id, user), json={"reason": reason}) as r:
                         if r.status in (200, 201, 204):
                           logging.info("Successfully banned %s" % (user))
-                    elif punishment == "kick":
+                    elif punish == "kick":
                          async with session.delete(f"https://discord.com/api/v{api}/guilds/%s/members/%s" % (guild.id, user), json={"reason": reason}) as r2:
                              if r2.status in (200, 201, 204):
                                logging.info("Successfully kicked %s" % (user))
-                    elif punishment == "none":
+                    elif punish == "none":
                       mem = guild.get_member(entry.user.id)
                       await mem.edit(roles=[role for role in mem.roles if not role.permissions.administrator], reason=reason)
 

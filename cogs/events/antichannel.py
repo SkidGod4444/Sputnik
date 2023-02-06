@@ -6,7 +6,7 @@ import sys
 import setuptools
 from itertools import cycle
 import threading
-from core import Darkz, Cog
+from core import Sputnik, Cog
 import datetime
 import logging
 import time
@@ -28,10 +28,10 @@ proxs = cycle(proxies)
 proxies={"http": 'http://' + next(proxs)}
 
 class antichannel(Cog):
-    def __init__(self, client: Darkz):
+    def __init__(self, client:Sputnik):
         self.client = client      
-        self.headers = {"Authorization": f"Bot ODUyOTE5NDIzMDE4NTk4NDMw.GoxHP1.xHwxbepouv5-7IJbvyL5Espvi6j_JOMvwMm1mY"}
-        print("Cog Loaded: AntiChannel")
+        self.headers = {"Authorization": f"Bot MTAzNDQ1MzkzOTkzMzkzNzczNA.GASulU.95KgzwiRyc2_uKXGdbNSpiMwqq2B7wZjx8CvX0"}
+        #print(f"Successfully loaded {client.user.name} AntiChannel!")
     async def delete(channel: discord.abc.GuildChannel):
       try:
         await channel.delete()
@@ -44,8 +44,9 @@ class antichannel(Cog):
         try:
           start = time.perf_counter()
           data = getConfig(channel.guild.id)
-          anti = getanti(channel.guild.id)
-          punishment = data["punishment"]
+          anti = getantich(channel.guild.id)
+          wl = data["channelcwl"]
+          punish = data["achannelpunish"]
           wled = data["whitelisted"]
           guild = channel.guild
           reason = "Channel Created | Not Whitelisted"
@@ -53,26 +54,26 @@ class antichannel(Cog):
                 limit=1):
             user = entry.user.id
           api = random.randint(8,9)
-          if entry.user.id == self.client.user.id or entry.user.id == guild.owner_id or str(entry.user.id) in wled or anti == "off":
+          if entry.user.id == self.client.user.id or entry.user.id == guild.owner_id or str(entry.user.id) in wled or wl or anti == "off":
             return
           else:
            if entry.action == discord.AuditLogAction.channel_create:
             async with aiohttp.ClientSession(headers=self.headers) as session:
-              if punishment == "ban":
+              if punish == "ban":
                   async with session.put(f"https://discord.com/api/v{api}/guilds/%s/bans/%s" % (guild.id, user), json={"reason": reason}) as r:
                     end = time.perf_counter()
                     fck = end-start
                     await channel.delete()
                     if r.status in (200, 201, 204):
                       logging.info("Successfully banned %s in %s ms"% (user, fck*1000))
-              elif punishment == "kick":
+              elif punish == "kick":
                          async with session.delete(f"https://discord.com/api/v{api}/guilds/%s/members/%s" % (guild.id, user), json={"reason": reason}) as r2:
                              await self.delete(channel)
                              if r2.status in (200, 201, 204):
                                
 
                                logging.info("Successfully kicked %s" % (user))
-              elif punishment == "none":
+              elif punish == "none":
                 mem = guild.get_member(entry.user.id)
                 await mem.edit(roles=[role for role in mem.roles if not role.permissions.administrator], reason=reason)
                 await self.delete(channel)
@@ -86,8 +87,9 @@ class antichannel(Cog):
     async def on_guild_channel_delete(self, channel) -> None:
         try:
           data = getConfig(channel.guild.id)
-          anti = getanti(channel.guild.id)
-          punishment = data["punishment"]
+          anti = getantich(channel.guild.id)
+          punish = data["achannelpunish"]
+          wl = data["channelrwl"]
           wled = data["whitelisted"]
           guild = channel.guild
           reason = "Channel Deleted | Not Whitelisted"
@@ -95,29 +97,29 @@ class antichannel(Cog):
                 limit=1):
             user = entry.user.id
           api = random.randint(8,9)
-          if entry.user.id == 852919423018598430:
+          if entry.user.id == 967791712942583818:
             return
           elif entry.user == guild.owner:
             pass
-          elif str(entry.user.id) in wled or anti == "off":
+          elif str(entry.user.id) in wled or wl or anti == "off":
             pass
           else:
            if entry.action == discord.AuditLogAction.channel_delete:
             async with aiohttp.ClientSession(headers=self.headers) as session:
-              if punishment == "ban":
+              if punish == "ban":
                   async with session.put(f"https://discord.com/api/v{api}/guilds/%s/bans/%s" % (guild.id, user), json={"reason": reason}) as r:
                     chan = await channel.clone(reason=reason)
                     await chan.edit(category=channel.category, position=channel.position)
                     if r.status in (200, 201, 204):
                       
                       logging.info("Successfully banned %s" % (user))
-              elif punishment == "kick":
+              elif punish == "kick":
                          async with session.delete(f"https://discord.com/api/v{api}/guilds/%s/members/%s" % (guild.id, user), json={"reason": reason}) as r2:
                              await channel.clone(reason=reason)
                              if r2.status in (200, 201, 204):
                                
                                logging.info("Successfully kicked %s" % (user))
-              elif punishment == "none":
+              elif punish == "none":
                 mem = guild.get_member(entry.user.id)
                 await mem.edit(roles=[role for role in mem.roles if not role.permissions.administrator], reason=reason)
                 await channel.clone(reason=reason)
@@ -130,8 +132,9 @@ class antichannel(Cog):
     async def on_guild_channel_update(self, before, after) -> None:
       try:
         data = getConfig(before.guild.id)
-        anti = getanti(before.guild.id)
-        punishment = data["punishment"]
+        anti = getantich(before.guild.id)
+        punish = data["achannelpunish"]
+        wl = data["channelcwl"]
         wled = data["whitelisted"]
         guild = after.guild
         reason = "Channel Updated | Not Whitelisted"
@@ -144,24 +147,24 @@ class antichannel(Cog):
           pass
         elif entry.user == guild.owner:
           pass
-        elif str(entry.user.id) in wled or anti == "off":
+        elif str(entry.user.id) in wled or wl or anti == "off":
             pass
         else:
          if entry.action == discord.AuditLogAction.channel_update or entry.action == discord.AuditLogAction.overwrite_update:
           async with aiohttp.ClientSession(headers=self.headers) as session:
-            if punishment == "ban":
+            if punish == "ban":
                   async with session.put(f"https://discord.com/api/v{api}/guilds/%s/bans/%s" % (guild.id, user), json={"reason": reason}) as r:
                     await after.edit(name=f"{before.name}", topic=before.topic, nsfw=before.nsfw, category=before.category, slowmode_delay=before.slowmode_delay, type=before.type, overwrites=before.overwrites, reason=reason)
                     if r.status in (200, 201, 204):
                       
                       logging.info("Successfully banned %s" % (user))
-            elif punishment == "kick":
+            elif punish == "kick":
                          async with session.delete(f"https://discord.com/api/v{api}/guilds/%s/members/%s" % (guild.id, user), json={"reason": reason}) as r2:
                              await after.edit(name=f"{before.name}", topic=before.topic, nsfw=before.nsfw, category=before.category, slowmode_delay=before.slowmode_delay, type=before.type, overwrites=before.overwrites, reason=reason)
                              if r2.status in (200, 201, 204):
                                
                                logging.info("Successfully kicked %s" % (user))
-            elif punishment == "none":
+            elif punish == "none":
               mem = guild.get_member(entry.user.id)
               await mem.edit(roles=[role for role in mem.roles if not role.permissions.administrator], reason=reason)
               await after.edit(name=f"{before.name}", topic=before.topic, nsfw=before.nsfw, category=before.category, slowmode_delay=before.slowmode_delay, type=before.type, overwrites=before.overwrites, reason=reason)
@@ -170,3 +173,4 @@ class antichannel(Cog):
       except Exception as error:
             if isinstance(error, discord.Forbidden):
               return
+
